@@ -413,26 +413,18 @@ if(localStorage.getItem('fitpro_trainer_auth')!=='true'){window.location.href='t
 </div>
 
 <script>
-// STATE
-let applications=JSON.parse(localStorage.getItem('fitpro_applications')||'[]');
-let notes=JSON.parse(localStorage.getItem('fitpro_notes')||'{}');
-let chatData=JSON.parse(localStorage.getItem('fitpro_chat')||'{}');
+// ── STATE ── (always read fresh from localStorage — no hardcoded sample data)
+function loadData(){
+  applications=JSON.parse(localStorage.getItem('fitpro_applications')||'[]');
+  notes=JSON.parse(localStorage.getItem('fitpro_notes')||'{}');
+  chatData=JSON.parse(localStorage.getItem('fitpro_chat')||'{}');
+}
+let applications=[], notes={}, chatData={};
+loadData();
+
 let currentFilter='all';
-let currentAction=null;
-let currentNoteIdx=null;
 let currentChatClient=null;
 let calDate=new Date();
-
-// SAMPLE DATA
-if(applications.length===0){
-  applications=[
-    {id:1,firstName:'Arjun',lastName:'Sharma',email:'arjun@email.com',phone:'9876543210',age:25,gender:'Male',plan:'Transform ₹5,999/mo',goal:'Muscle Gain',fitness:'Intermediate (1-3 years)',diabetic:'No',about:'Regular gym-goer for 2 years. Looking to add lean mass.',status:'pending',date:'2025-01-14',reason:''},
-    {id:2,firstName:'Priya',lastName:'Reddy',email:'priya@email.com',phone:'8765432109',age:28,gender:'Female',plan:'Kickstart ₹4,999/mo',goal:'Fat Loss',fitness:'Complete Beginner',diabetic:'No',about:'Just started my fitness journey. Need guidance.',status:'pending',date:'2025-01-13',reason:''},
-    {id:3,firstName:'Rohan',lastName:'Verma',email:'rohan@email.com',phone:'7654321098',age:32,gender:'Male',plan:'Elite ₹12,999/mo',goal:'Recomposition',fitness:'Advanced (3+ years)',diabetic:'Type 2',about:'Competitive athlete, need contest prep help.',status:'accepted',date:'2025-01-10',reason:''},
-    {id:4,firstName:'Sneha',lastName:'Patel',email:'sneha@email.com',phone:'6543210987',age:22,gender:'Female',plan:'Transform ₹5,999/mo',goal:'General Fitness',fitness:'Some Experience (6-12 months)',diabetic:'No',about:'Student, want to get healthier.',status:'rejected',date:'2025-01-08',reason:'Age group program not available currently.'},
-  ];
-  saveData();
-}
 
 function saveData(){
   localStorage.setItem('fitpro_applications',JSON.stringify(applications));
@@ -441,21 +433,34 @@ function saveData(){
   updateStats();
 }
 
-// INIT
-document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
-updateStats();renderOverviewTable();renderMainTable();renderClientsTable();renderCalendar();renderChatList();renderProgress();
+// ── AUTO-REFRESH every 5 seconds so new applications appear without reload ──
+setInterval(()=>{
+  loadData();
+  refreshAll();
+},5000);
 
-function updateStats(){
-  const total=applications.length;
-  const pending=applications.filter(a=>a.status==='pending').length;
-  const accepted=applications.filter(a=>a.status==='accepted').length;
-  document.getElementById('totalApps').textContent=total;
-  document.getElementById('pendingApps').textContent=pending;
-  document.getElementById('acceptedApps').textContent=accepted;
-  document.getElementById('pendingBadge').textContent=pending;
+function refreshAll(){
+  updateStats();
+  renderOverviewTable();
+  renderMainTable();
+  renderClientsTable();
+  renderChatList();
+  renderProgress();
 }
 
-// NAVIGATION
+// ── INIT ──
+document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+refreshAll();
+renderCalendar();
+
+function updateStats(){
+  document.getElementById('totalApps').textContent=applications.length;
+  document.getElementById('pendingApps').textContent=applications.filter(a=>a.status==='pending').length;
+  document.getElementById('acceptedApps').textContent=applications.filter(a=>a.status==='accepted').length;
+  document.getElementById('pendingBadge').textContent=applications.filter(a=>a.status==='pending').length;
+}
+
+// ── NAVIGATION ──
 function showPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -466,27 +471,38 @@ function showPanel(name){
   const idx={overview:0,applications:1,clients:2,calendar:3,chat:4,progress:5};
   if(idx[name]!==undefined)navItems[idx[name]].classList.add('active');
 }
-
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
 
-// TABLE RENDERING
-function buildTableHTML(apps,showAll){
-  if(apps.length===0)return '<p style="padding:2rem;text-align:center;color:var(--gray)">No applications found.</p>';
+// ── TABLES ──
+function buildTableHTML(apps){
+  if(apps.length===0)return `<div style="padding:3rem;text-align:center;color:var(--gray)">
+    <div style="font-size:2rem;margin-bottom:.8rem">📭</div>
+    <div style="font-size:.9rem">No applications here yet.</div>
+    <div style="font-size:.78rem;margin-top:.4rem;color:#555">Applications submitted on the main site will appear here automatically.</div>
+  </div>`;
+
   return `<table class="apps-table">
     <thead><tr>
-      <th>#</th><th>Name</th><th>Plan</th><th>Goal</th><th>Date</th><th>Status</th><th>Actions</th>
+      <th>Name</th><th>Plan</th><th>Goal</th><th>Fitness</th><th>Date</th><th>Status</th><th>Actions</th>
     </tr></thead>
-    <tbody>${apps.map((a,i)=>`
+    <tbody>${apps.map(a=>`
       <tr>
-        <td>${a.id}</td>
-        <td><strong>${a.firstName} ${a.lastName}</strong><br><small style="color:var(--gray)">${a.email}</small></td>
-        <td><small style="color:var(--gold)">${a.plan}</small></td>
-        <td>${a.goal}</td>
-        <td><small style="color:var(--gray)">${a.date}</small></td>
+        <td>
+          <strong>${escHtml(a.firstName)} ${escHtml(a.lastName)}</strong><br>
+          <small style="color:var(--gray)">${escHtml(a.email)}</small><br>
+          <small style="color:#555">${escHtml(a.phone||'')}</small>
+        </td>
+        <td><small style="color:var(--gold)">${escHtml(a.plan||'—')}</small></td>
+        <td>${escHtml(a.goal||'—')}</td>
+        <td><small>${escHtml(a.fitness||'—')}</small></td>
+        <td><small style="color:var(--gray)">${escHtml(a.date||'')}</small></td>
         <td><span class="status-badge status-${a.status}">${a.status}</span></td>
         <td><div class="action-btns">
-          ${a.status==='pending'?`<button class="btn-accept" onclick="openAction(${a.id},'accept')">✓ Accept</button>
-          <button class="btn-reject" onclick="openAction(${a.id},'reject')">✗ Reject</button>`:''}
+          <button class="btn-view" onclick="viewApp(${a.id})">👁 View</button>
+          ${a.status==='pending'?`
+            <button class="btn-accept" onclick="openAction(${a.id},'accept')">✓ Accept</button>
+            <button class="btn-reject" onclick="openAction(${a.id},'reject')">✗ Reject</button>`
+          :''}
           <button class="btn-note" onclick="openNote(${a.id})">📝 Note</button>
         </div></td>
       </tr>`).join('')}
@@ -494,28 +510,42 @@ function buildTableHTML(apps,showAll){
   </table>`;
 }
 
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
 function renderOverviewTable(){
-  document.getElementById('overviewTable').innerHTML=buildTableHTML(applications.slice(0,5));
+  // Show newest 5
+  const sorted=[...applications].sort((a,b)=>b.id-a.id).slice(0,5);
+  document.getElementById('overviewTable').innerHTML=buildTableHTML(sorted);
 }
 function renderMainTable(){
-  const filtered=currentFilter==='all'?applications:applications.filter(a=>a.status===currentFilter);
+  const sorted=[...applications].sort((a,b)=>b.id-a.id);
+  const filtered=currentFilter==='all'?sorted:sorted.filter(a=>a.status===currentFilter);
   document.getElementById('mainAppsTable').innerHTML=buildTableHTML(filtered);
 }
 function renderClientsTable(){
   const accepted=applications.filter(a=>a.status==='accepted');
-  if(accepted.length===0){document.getElementById('clientsTable').innerHTML='<p style="padding:2rem;text-align:center;color:var(--gray)">No active clients yet.</p>';return}
+  if(accepted.length===0){
+    document.getElementById('clientsTable').innerHTML=`<div style="padding:3rem;text-align:center;color:var(--gray)">
+      <div style="font-size:2rem;margin-bottom:.8rem">👥</div>
+      <div>No active clients yet. Accept applications to see clients here.</div>
+    </div>`;
+    return;
+  }
   document.getElementById('clientsTable').innerHTML=`<table class="apps-table">
     <thead><tr><th>Client</th><th>Plan</th><th>Goal</th><th>Fitness Level</th><th>Diabetic</th><th>Actions</th></tr></thead>
     <tbody>${accepted.map(a=>`
       <tr>
-        <td><strong>${a.firstName} ${a.lastName}</strong><br><small style="color:var(--gray)">${a.email} · ${a.phone}</small></td>
-        <td><small style="color:var(--gold)">${a.plan}</small></td>
-        <td>${a.goal}</td>
-        <td>${a.fitness}</td>
-        <td>${a.diabetic}</td>
+        <td><strong>${escHtml(a.firstName)} ${escHtml(a.lastName)}</strong><br>
+            <small style="color:var(--gray)">${escHtml(a.email)}</small><br>
+            <small style="color:#555">${escHtml(a.phone||'')}</small></td>
+        <td><small style="color:var(--gold)">${escHtml(a.plan||'')}</small></td>
+        <td>${escHtml(a.goal||'')}</td>
+        <td><small>${escHtml(a.fitness||'')}</small></td>
+        <td>${escHtml(a.diabetic||'No')}</td>
         <td><div class="action-btns">
+          <button class="btn-view" onclick="viewApp(${a.id})">👁 View</button>
           <button class="btn-note" onclick="openNote(${a.id})">📝 Note</button>
-          <button class="btn-view" onclick="openAction(${a.id},'reject')">Remove</button>
+          <button class="btn-reject" onclick="openAction(${a.id},'reject')">Remove</button>
         </div></td>
       </tr>`).join('')}
     </tbody>
@@ -529,12 +559,60 @@ function filterApps(f,btn){
   renderMainTable();
 }
 
-// ACTION MODAL
+// ── VIEW APPLICATION DETAIL ──
+function viewApp(id){
+  const a=applications.find(x=>x.id===id);
+  if(!a)return;
+  document.getElementById('actionTitle').textContent='👁 Application Details';
+  document.getElementById('actionReason').style.display='none';
+  document.querySelector('#actionModal .btn-gold').style.display='none';
+  // Reuse modal box with details
+  const box=document.querySelector('#actionModal .modal-box');
+  box.querySelector('.modal-title').textContent='Application Details';
+  // Build detail HTML
+  const detailDiv=document.getElementById('appDetailView')||document.createElement('div');
+  detailDiv.id='appDetailView';
+  detailDiv.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem">
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Full Name</div><div style="font-weight:600">${escHtml(a.firstName)} ${escHtml(a.lastName)}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Status</div><span class="status-badge status-${a.status}">${a.status}</span></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Email</div><div>${escHtml(a.email)}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Phone</div><div>${escHtml(a.phone||'—')}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Age / Gender</div><div>${escHtml(String(a.age||'—'))} / ${escHtml(a.gender||'—')}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Plan Selected</div><div style="color:var(--gold)">${escHtml(a.plan||'—')}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Goal</div><div>${escHtml(a.goal||'—')}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Fitness Level</div><div>${escHtml(a.fitness||'—')}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Diabetic</div><div>${escHtml(a.diabetic||'No')}</div></div>
+      <div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem">Applied On</div><div>${escHtml(a.date||'—')}</div></div>
+    </div>
+    <div style="margin-bottom:1rem"><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem">About Themselves</div>
+    <div style="background:#161616;border:1px solid var(--border);border-radius:3px;padding:.8rem;font-size:.85rem;line-height:1.6;color:rgba(245,245,245,0.8)">${escHtml(a.about||'—')}</div></div>
+    ${a.reason?`<div><div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem">Trainer Note/Reason</div><div style="color:rgba(245,245,245,0.7);font-size:.85rem">${escHtml(a.reason)}</div></div>`:''}
+    <div style="display:flex;gap:.8rem;margin-top:1.2rem;flex-wrap:wrap">
+      ${a.status==='pending'?`<button class="btn-accept" style="padding:.5rem 1rem" onclick="closeModal('actionModal');openAction(${a.id},'accept')">✓ Accept</button>
+      <button class="btn-reject" style="padding:.5rem 1rem" onclick="closeModal('actionModal');openAction(${a.id},'reject')">✗ Reject</button>`:''}
+      <button class="btn-note" style="padding:.5rem 1rem" onclick="closeModal('actionModal');openNote(${a.id})">📝 Add Note</button>
+    </div>`;
+  // Insert into modal
+  const existing=box.querySelector('#appDetailView');
+  if(existing)existing.remove();
+  box.appendChild(detailDiv);
+  openModal('actionModal');
+}
+
+// ── ACTION MODAL (Accept / Reject) ──
 let actionId=null,actionType=null;
 function openAction(id,type){
   actionId=id;actionType=type;
-  document.getElementById('actionTitle').textContent=type==='accept'?'✅ Accept Application':'❌ Reject Application';
+  // Reset modal to action mode
+  const box=document.querySelector('#actionModal .modal-box');
+  box.querySelector('.modal-title').textContent=type==='accept'?'✅ Accept Application':'❌ Reject Application';
+  document.getElementById('actionReason').style.display='block';
   document.getElementById('actionReason').value='';
+  document.querySelector('#actionModal .btn-gold').style.display='block';
+  document.querySelector('#actionModal .btn-gold').textContent='Confirm';
+  const existing=box.querySelector('#appDetailView');
+  if(existing)existing.remove();
   openModal('actionModal');
 }
 function confirmAction(){
@@ -543,14 +621,15 @@ function confirmAction(){
   app.status=actionType==='accept'?'accepted':'rejected';
   app.reason=document.getElementById('actionReason').value;
   saveData();
-  renderOverviewTable();renderMainTable();renderClientsTable();renderChatList();
+  refreshAll();
   closeModal('actionModal');
   showToast(actionType==='accept'?`✅ ${app.firstName} accepted!`:`❌ ${app.firstName} rejected.`);
 }
 
-// NOTE MODAL
+// ── NOTE MODAL ──
 function openNote(id){
   const app=applications.find(a=>a.id===id);
+  if(!app)return;
   currentNoteIdx=id;
   document.getElementById('noteClientName').value=app.firstName+' '+app.lastName;
   document.getElementById('noteText').value=notes[id]||'';
@@ -563,8 +642,7 @@ function saveNote(){
   showToast('📝 Note saved!');
 }
 
-// CALENDAR
-const checkIns=[3,5,7,10,12,14,15,17,19,21,22];
+// ── CALENDAR (trainer overview — shows all client check-ins) ──
 function renderCalendar(){
   const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -574,27 +652,36 @@ function renderCalendar(){
   const firstDay=new Date(calDate.getFullYear(),calDate.getMonth(),1).getDay();
   const daysInMonth=new Date(calDate.getFullYear(),calDate.getMonth()+1,0).getDate();
   const today=new Date();
-  for(let i=0;i<firstDay;i++){
-    const prev=new Date(calDate.getFullYear(),calDate.getMonth(),0).getDate()-firstDay+i+1;
-    grid.innerHTML+=`<div class="cal-day other-month">${prev}</div>`;
-  }
+  // Collect all client check-in dates
+  const allCheckins=new Set();
+  applications.filter(a=>a.status==='accepted').forEach(a=>{
+    const cins=JSON.parse(localStorage.getItem('fitpro_checkins_'+a.id)||'[]');
+    cins.forEach(d=>allCheckins.add(d));
+  });
+  for(let i=0;i<firstDay;i++)grid.innerHTML+=`<div class="cal-day other-month"></div>`;
   for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${calDate.getFullYear()}-${String(calDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday=d===today.getDate()&&calDate.getMonth()===today.getMonth()&&calDate.getFullYear()===today.getFullYear();
-    const isCheckin=checkIns.includes(d);
-    grid.innerHTML+=`<div class="cal-day ${isToday?'today':''} ${isCheckin&&!isToday?'checked-in':''}">${d}</div>`;
+    const isCheckin=allCheckins.has(dateStr);
+    grid.innerHTML+=`<div class="cal-day ${isToday?'today':''} ${isCheckin&&!isToday?'checked-in':''}" title="${isCheckin?'Client checked in':''}">
+      ${d}${isCheckin&&!isToday?'<span style="display:block;width:4px;height:4px;background:#4CAF50;border-radius:50%;margin:0 auto"></span>':''}
+    </div>`;
   }
 }
 function changeMonth(dir){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1);renderCalendar()}
 
-// CHAT
+// ── CHAT ──
 function renderChatList(){
   const accepted=applications.filter(a=>a.status==='accepted');
   const list=document.getElementById('chatClientsList');
-  if(accepted.length===0){list.innerHTML='<p style="padding:1rem;color:var(--gray);font-size:.82rem">No active clients</p>';return}
+  if(accepted.length===0){
+    list.innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--gray);font-size:.82rem">No active clients yet</div>';
+    return;
+  }
   list.innerHTML=accepted.map(a=>`
     <div class="client-chat-item ${currentChatClient===a.id?'active':''}" onclick="selectChatClient(${a.id})">
-      <div class="client-chat-name">${a.firstName} ${a.lastName}</div>
-      <div class="client-chat-preview">${(chatData[a.id]||[]).length>0?(chatData[a.id].slice(-1)[0].text||'').slice(0,40):'No messages yet'}</div>
+      <div class="client-chat-name">${escHtml(a.firstName)} ${escHtml(a.lastName)}</div>
+      <div class="client-chat-preview">${(chatData[a.id]||[]).length>0?escHtml((chatData[a.id].slice(-1)[0].text||'').slice(0,40)):'No messages yet'}</div>
     </div>`).join('');
 }
 function selectChatClient(id){
@@ -607,16 +694,16 @@ function selectChatClient(id){
 function renderMessages(){
   const msgs=chatData[currentChatClient]||[];
   const container=document.getElementById('chatMessages');
-  if(msgs.length===0){container.innerHTML='<div style="text-align:center;color:var(--gray);padding:2rem">Start a conversation!</div>';return}
+  if(msgs.length===0){container.innerHTML='<div style="text-align:center;color:var(--gray);padding:2rem;font-size:.85rem">Start a conversation with this client!</div>';return}
   container.innerHTML=msgs.map(m=>`
     <div>
-      <div class="msg ${m.sender}">${m.text}</div>
-      <div class="msg-time" style="${m.sender==='trainer'?'text-align:right':'text-align:left'}">${m.time}</div>
+      <div class="msg ${m.sender==='trainer'?'trainer':'client'}">${escHtml(m.text)}</div>
+      <div class="msg-time" style="${m.sender==='trainer'?'text-align:right':'text-align:left'}">${m.sender==='trainer'?'You':'Client'} · ${escHtml(m.time)}</div>
     </div>`).join('');
   container.scrollTop=container.scrollHeight;
 }
 function sendMsg(){
-  if(!currentChatClient)return;
+  if(!currentChatClient){showToast('Select a client first');return}
   const input=document.getElementById('chatInput');
   const text=input.value.trim();
   if(!text)return;
@@ -628,23 +715,26 @@ function sendMsg(){
   renderChatList();
 }
 
-// PROGRESS
+// ── PROGRESS PHOTOS ──
 function renderProgress(){
   const accepted=applications.filter(a=>a.status==='accepted');
   const grid=document.getElementById('progressGrid');
-  if(accepted.length===0){grid.innerHTML='<p style="color:var(--gray)">No active clients with progress photos.</p>';return}
+  if(accepted.length===0){
+    grid.innerHTML='<p style="color:var(--gray)">No active clients yet. Accept applications to see progress photos here.</p>';
+    return;
+  }
   grid.innerHTML=accepted.map(a=>`
     <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;overflow:hidden">
       <div style="aspect-ratio:1;background:linear-gradient(135deg,#111,#1a1408);display:flex;align-items:center;justify-content:center;font-size:3rem">💪</div>
       <div style="padding:1rem">
-        <div style="font-weight:600;margin-bottom:.2rem">${a.firstName} ${a.lastName}</div>
-        <div style="font-size:.75rem;color:var(--gold)">${a.plan}</div>
+        <div style="font-weight:600;margin-bottom:.2rem">${escHtml(a.firstName)} ${escHtml(a.lastName)}</div>
+        <div style="font-size:.75rem;color:var(--gold)">${escHtml(a.plan||'')}</div>
         <div style="font-size:.75rem;color:var(--gray);margin-top:.3rem">No photos uploaded yet</div>
       </div>
     </div>`).join('');
 }
 
-// UTILS
+// ── UTILS ──
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function closeIfOutside(e,id){if(e.target.id===id)closeModal(id)}
