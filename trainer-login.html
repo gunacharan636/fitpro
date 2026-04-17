@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FitPro — Trainer Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0D0D0D;--gold:#C9A84C;--gold-light:#E8C96A;--white:#F5F5F5;--gray:#888;--card-bg:#111;--red:#ff4d4d}
+*{margin:0;padding:0;box-sizing:border-box}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0D0D0D}::-webkit-scrollbar-thumb{background:var(--gold)}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;display:flex;flex-direction:column}
+/* BG */
+.bg-pattern{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 60% at 70% 50%,rgba(201,168,76,0.07) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 80%,rgba(201,168,76,0.04) 0%,transparent 60%);
+}
+/* NAVBAR */
+nav{
+  position:relative;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.2rem 5%;
+  border-bottom:1px solid rgba(201,168,76,0.1);
+}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);text-decoration:none}
+.back-link{color:var(--gray);text-decoration:none;font-size:.8rem;letter-spacing:1.5px;text-transform:uppercase;transition:.2s}
+.back-link:hover{color:var(--gold)}
+
+/* MAIN */
+main{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:2rem 1rem}
+.login-card{
+  background:#0f0f0f;
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:8px;
+  width:100%;max-width:440px;
+  padding:2.8rem 2.5rem;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+@keyframes shake{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-8px)}30%,60%,90%{transform:translateX(8px)}}
+.login-card.shaking{animation:shake .5s ease}
+.card-icon{font-size:2.5rem;margin-bottom:1rem;display:block;text-align:center}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;text-align:center;color:var(--gold);margin-bottom:.3rem}
+.card-sub{text-align:center;color:var(--gray);font-size:.82rem;margin-bottom:2.2rem}
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem}
+.form-group label{font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
+.input-wrap{position:relative}
+.form-group input{
+  width:100%;background:#161616;border:1px solid #222;
+  color:var(--white);padding:.8rem 1rem;border-radius:4px;
+  font-family:'DM Sans',sans-serif;font-size:.95rem;transition:.2s;
+}
+.form-group input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,0.1)}
+.form-group input.error-field{border-color:var(--red)}
+.toggle-pw{
+  position:absolute;right:.8rem;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--gray);cursor:pointer;font-size:1rem;
+  transition:.2s;
+}
+.toggle-pw:hover{color:var(--gold)}
+.error-msg{
+  color:var(--red);font-size:.78rem;min-height:1.1rem;
+  opacity:0;transform:translateY(-4px);transition:.2s;
+}
+.error-msg.show{opacity:1;transform:translateY(0)}
+.options-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.keep-label{display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--gray)}
+.keep-label input{accent-color:var(--gold)}
+.btn-login{
+  width:100%;background:var(--gold);color:#0D0D0D;
+  padding:.9rem;border:2px solid var(--gold);
+  border-radius:4px;font-weight:700;font-size:.9rem;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+  transition:.25s;display:flex;align-items:center;justify-content:center;gap:.6rem;
+}
+.btn-login:hover{background:transparent;color:var(--gold)}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+/* SPINNER */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:16px;height:16px;border:2px solid rgba(13,13,13,0.3);border-top-color:#0D0D0D;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.btn-login.loading .spinner{display:block}
+.btn-login.loading .btn-text{display:none}
+/* LOCK */
+.lock-notice{
+  background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.3);
+  border-radius:4px;padding:1rem;text-align:center;
+  margin-top:1rem;display:none;
+}
+.lock-notice.show{display:block}
+.lock-countdown{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--red);letter-spacing:2px}
+.lock-text{font-size:.8rem;color:#ff8080;margin-top:.3rem}
+/* PROGRESS BAR */
+.progress-bar-wrap{display:none;margin-top:1.5rem}
+.progress-bar-wrap.show{display:block}
+.progress-label{font-size:.75rem;letter-spacing:1px;color:var(--gold);text-align:center;margin-bottom:.6rem}
+.progress-track{height:4px;background:#1e1e1e;border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:var(--gold);border-radius:2px;transition:width .1s linear}
+/* ATTEMPTS */
+.attempts-indicator{
+  display:flex;gap:.4rem;justify-content:center;margin-top:1rem;
+}
+.attempt-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#222;border:1px solid #333;transition:.2s;
+}
+.attempt-dot.used{background:var(--red);border-color:var(--red)}
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<nav>
+  <a href="index.html" class="logo">FitPro</a>
+  <a href="index.html" class="back-link">← Back to Site</a>
+</nav>
+<main>
+  <div class="login-card" id="loginCard">
+    <span class="card-icon">🔐</span>
+    <div class="card-title">Trainer Access</div>
+    <p class="card-sub">Authorized personnel only</p>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter username" autocomplete="username"/>
+      <div class="error-msg" id="errUsername"></div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-wrap">
+        <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" id="pwField"/>
+        <button type="button" class="toggle-pw" id="togglePw" onclick="togglePassword()">👁</button>
+      </div>
+      <div class="error-msg" id="errPassword"></div>
+    </div>
+    <div class="options-row">
+      <label class="keep-label">
+        <input type="checkbox" id="keepSignedIn"/>
+        Keep me signed in
+      </label>
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="attemptLogin()">
+      <span class="btn-text">Login</span>
+      <div class="spinner"></div>
+    </button>
+    <div class="attempts-indicator" id="attemptsIndicator">
+      <div class="attempt-dot"></div>
+      <div class="attempt-dot"></div>
+      <div class="attempt-dot"></div>
+      <div class="attempt-dot"></div>
+      <div class="attempt-dot"></div>
+    </div>
+    <div class="lock-notice" id="lockNotice">
+      <div class="lock-countdown" id="lockCountdown">30</div>
+      <div class="lock-text">⛔ Too many failed attempts. Try again in <span id="lockSec">30</span> seconds.</div>
+    </div>
+    <div class="progress-bar-wrap" id="progressWrap">
+      <div class="progress-label">Verifying credentials...</div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const CORRECT_USER='flowzen';
+const CORRECT_PASS='flow1234';
+let failCount=0;
+let locked=false;
+let lockTimer=null;
+
+// Auto-login check
+if(localStorage.getItem('fitpro_trainer_keep')==='true'&&localStorage.getItem('fitpro_trainer_auth')==='true'){
+  window.location.href='trainer-dashboard.html';
+}
+
+function togglePassword(){
+  const inp=document.getElementById('password');
+  const btn=document.getElementById('togglePw');
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}
+  else{inp.type='password';btn.textContent='👁'}
+}
+
+document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')attemptLogin()});
+document.getElementById('username').addEventListener('keydown',e=>{if(e.key==='Enter')attemptLogin()});
+
+function shakeCard(){
+  const card=document.getElementById('loginCard');
+  card.classList.remove('shaking');
+  void card.offsetWidth;
+  card.classList.add('shaking');
+  setTimeout(()=>card.classList.remove('shaking'),500);
+}
+
+function markAttempt(idx){
+  const dots=document.querySelectorAll('.attempt-dot');
+  if(dots[idx])dots[idx].classList.add('used');
+}
+
+function setError(fieldId,msgId,msg){
+  document.getElementById(fieldId).classList.add('error-field');
+  const el=document.getElementById(msgId);
+  el.textContent=msg;el.classList.add('show');
+}
+function clearErrors(){
+  ['username','password'].forEach(id=>{document.getElementById(id).classList.remove('error-field')});
+  ['errUsername','errPassword'].forEach(id=>{
+    document.getElementById(id).classList.remove('show');
+    document.getElementById(id).textContent='';
+  });
+}
+
+function startLock(){
+  locked=true;
+  let sec=30;
+  document.getElementById('lockNotice').classList.add('show');
+  document.getElementById('loginBtn').disabled=true;
+  const countEl=document.getElementById('lockCountdown');
+  const secEl=document.getElementById('lockSec');
+  countEl.textContent=sec;secEl.textContent=sec;
+  lockTimer=setInterval(()=>{
+    sec--;
+    countEl.textContent=sec;secEl.textContent=sec;
+    if(sec<=0){
+      clearInterval(lockTimer);
+      locked=false;failCount=0;
+      document.getElementById('lockNotice').classList.remove('show');
+      document.getElementById('loginBtn').disabled=false;
+      document.querySelectorAll('.attempt-dot').forEach(d=>d.classList.remove('used'));
+    }
+  },1000);
+}
+
+function attemptLogin(){
+  if(locked)return;
+  clearErrors();
+  const user=document.getElementById('username').value.trim();
+  const pass=document.getElementById('password').value;
+  if(!user){setError('username','errUsername','Username required');return}
+  if(!pass){setError('password','errPassword','Password required');return}
+
+  const btn=document.getElementById('loginBtn');
+  btn.classList.add('loading');
+  btn.disabled=true;
+
+  setTimeout(()=>{
+    btn.classList.remove('loading');
+    if(user!==CORRECT_USER&&pass!==CORRECT_PASS){
+      btn.disabled=false;
+      failCount++;
+      markAttempt(failCount-1);
+      shakeCard();
+      setError('username','errUsername','Username not found');
+      setError('password','errPassword','Incorrect password');
+      if(failCount>=5)startLock();
+      return;
+    }
+    if(user!==CORRECT_USER){
+      btn.disabled=false;
+      failCount++;
+      markAttempt(failCount-1);
+      shakeCard();
+      setError('username','errUsername','Username not recognized');
+      if(failCount>=5)startLock();
+      return;
+    }
+    if(pass!==CORRECT_PASS){
+      btn.disabled=false;
+      failCount++;
+      markAttempt(failCount-1);
+      shakeCard();
+      setError('password','errPassword','Incorrect password. Check caps lock.');
+      if(failCount>=5)startLock();
+      return;
+    }
+    // SUCCESS
+    if(document.getElementById('keepSignedIn').checked){
+      localStorage.setItem('fitpro_trainer_keep','true');
+    }
+    localStorage.setItem('fitpro_trainer_auth','true');
+    showSuccessBar();
+  },1200);
+}
+
+function showSuccessBar(){
+  document.getElementById('progressWrap').classList.add('show');
+  const fill=document.getElementById('progressFill');
+  let w=0;
+  const interval=setInterval(()=>{
+    w=Math.min(w+3,100);
+    fill.style.width=w+'%';
+    if(w>=100){clearInterval(interval);setTimeout(()=>window.location.href='trainer-dashboard.html',300);}
+  },18);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FitPro — My Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0D0D0D;--gold:#C9A84C;--gold-light:#E8C96A;--white:#F5F5F5;--gray:#888;--card-bg:#111;--border:#1e1e1e;--green:#4CAF50;--red:#ff4d4d;--sidebar-w:250px}
+*{margin:0;padding:0;box-sizing:border-box}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#0D0D0D}::-webkit-scrollbar-thumb{background:var(--gold)}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;display:flex}
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:#080808;border-right:1px solid var(--border);position:fixed;top:0;left:0;z-index:100;display:flex;flex-direction:column;transition:.3s}
+.sidebar-logo{padding:1.5rem;border-bottom:1px solid var(--border);font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);display:flex;align-items:center;gap:.5rem}
+.sidebar-logo small{font-size:.6rem;letter-spacing:2px;color:var(--gray);font-family:'DM Sans',sans-serif;display:block;margin-top:.2rem}
+.sidebar-nav{flex:1;padding:1rem 0}
+.nav-item{display:flex;align-items:center;gap:.8rem;padding:.85rem 1.5rem;cursor:pointer;color:var(--gray);font-size:.85rem;font-weight:500;transition:.2s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--white);background:rgba(201,168,76,0.05)}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,0.07)}
+.sidebar-footer{padding:1.5rem;border-top:1px solid var(--border)}
+.client-info{display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem}
+.client-avatar{width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#0D0D0D;flex-shrink:0}
+.client-name{font-size:.85rem;font-weight:600}
+.client-plan{font-size:.7rem;color:var(--gold)}
+.logout-btn{width:100%;background:transparent;border:1px solid var(--border);color:var(--gray);padding:.5rem;border-radius:3px;cursor:pointer;font-size:.75rem;letter-spacing:1.5px;text-transform:uppercase;transition:.2s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+.main-content{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2rem;border-bottom:1px solid var(--border);background:rgba(13,13,13,0.8);backdrop-filter:blur(10px);position:sticky;top:0;z-index:50}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px}
+.menu-toggle{display:none;background:none;border:none;color:var(--gold);font-size:1.3rem;cursor:pointer}
+.panel{display:none;padding:2rem;animation:fadeIn .3s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* STATUS CARD */
+.status-hero{background:linear-gradient(135deg,#1a1206,#0f0f0f);border:1px solid var(--gold);border-radius:8px;padding:2rem;margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.status-pill{padding:.4rem 1.2rem;border-radius:20px;font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.status-pill.accepted{background:rgba(76,175,80,0.15);color:#4CAF50;border:1px solid rgba(76,175,80,0.4)}
+.status-pill.pending{background:rgba(255,165,0,0.1);color:#FFA500;border:1px solid rgba(255,165,0,0.3)}
+.status-pill.rejected{background:rgba(255,77,77,0.1);color:#ff4d4d;border:1px solid rgba(255,77,77,0.3)}
+
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-bottom:2rem}
+.info-card{background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:1.4rem}
+.info-card-icon{font-size:1.5rem;margin-bottom:.8rem}
+.info-card-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--gold);letter-spacing:2px}
+.info-card-label{font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-top:.2rem}
+
+/* CALENDAR */
+.calendar-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:1.5rem}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.cal-month{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--gold)}
+.cal-nav{background:none;border:1px solid var(--border);color:var(--gold);width:30px;height:30px;border-radius:3px;cursor:pointer;transition:.2s}
+.cal-nav:hover{background:rgba(201,168,76,0.1)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day-header{text-align:center;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:.4rem 0}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:.82rem;cursor:pointer;transition:.2s;border:1px solid transparent}
+.cal-day:hover{border-color:var(--gold)}
+.cal-day.today{background:var(--gold);color:#0D0D0D;font-weight:700}
+.cal-day.checked-in{background:rgba(76,175,80,0.2);border-color:rgba(76,175,80,0.4);color:#4CAF50}
+.cal-day.other-month{color:#333}
+.btn-checkin{background:var(--gold);color:#0D0D0D;border:none;padding:.7rem 1.5rem;border-radius:4px;font-weight:700;font-size:.82rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:.2s;margin-top:1rem}
+.btn-checkin:hover{background:var(--gold-light)}
+.btn-checkin:disabled{opacity:.5;cursor:not-allowed}
+
+/* NOTES */
+.notes-list{display:flex;flex-direction:column;gap:1rem}
+.note-card{background:var(--card-bg);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:1.2rem;border-left:3px solid var(--gold)}
+.note-date{font-size:.72rem;color:var(--gold);margin-bottom:.5rem;letter-spacing:1px}
+.note-text{color:rgba(245,245,245,0.85);font-size:.88rem;line-height:1.6}
+
+/* CHAT */
+.chat-window{background:var(--card-bg);border:1px solid var(--border);border-radius:6px;display:flex;flex-direction:column;height:500px}
+.chat-header{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.8rem}
+.chat-messages{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:.8rem}
+.msg{max-width:70%;padding:.7rem 1rem;border-radius:6px;font-size:.85rem;line-height:1.5}
+.msg.trainer{background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.2);align-self:flex-start}
+.msg.client-msg{background:#1a1a2e;border:1px solid rgba(74,158,255,0.2);align-self:flex-end}
+.msg-time{font-size:.65rem;color:var(--gray);margin-top:.3rem}
+.chat-input-row{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.8rem}
+.chat-input{flex:1;background:#161616;border:1px solid var(--border);color:var(--white);padding:.7rem 1rem;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.9rem}
+.chat-input:focus{outline:none;border-color:var(--gold)}
+.chat-send{background:var(--gold);color:#0D0D0D;border:none;padding:.7rem 1.2rem;border-radius:4px;cursor:pointer;font-weight:700;font-size:.8rem;transition:.2s}
+.chat-send:hover{background:var(--gold-light)}
+
+/* MEMBERSHIP BAR */
+.membership-bar-wrap{margin:1rem 0}
+.membership-bar-track{height:6px;background:#1e1e1e;border-radius:3px;overflow:hidden;margin-top:.5rem}
+.membership-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:3px;transition:width .8s ease}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;z-index:9999;background:#1a1a1a;border:1px solid var(--gold);border-radius:4px;padding:1rem 1.5rem;display:flex;align-items:center;gap:.8rem;transform:translateY(100px);opacity:0;transition:.4s cubic-bezier(.4,0,.2,1);min-width:260px}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0}
+  .menu-toggle{display:block}
+  .cards-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- DEMO CLIENT DATA -->
+<script>
+// In real app this would come from backend
+// For demo, we'll use a sample accepted client
+const CLIENT={
+  firstName:'Rohan',lastName:'Verma',email:'rohan@email.com',
+  plan:'Elite ₹12,999/mo',goal:'Recomposition',
+  startDate:'2025-01-10',totalDays:180,daysUsed:7,
+  status:'accepted'
+};
+const CLIENT_ID=3;
+let checkins=JSON.parse(localStorage.getItem('fitpro_checkins_'+CLIENT_ID)||'[]');
+let chatData=JSON.parse(localStorage.getItem('fitpro_chat')||'{}');
+let notes=JSON.parse(localStorage.getItem('fitpro_notes')||'{}');
+let calDate=new Date();
+</script>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><span>⚡</span><div>FitPro<small>Client Dashboard</small></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="showPanel('home')"><span>🏠</span> Home</div>
+    <div class="nav-item" onclick="showPanel('calendar')"><span>📅</span> Gym Calendar</div>
+    <div class="nav-item" onclick="showPanel('chat')"><span>💬</span> Chat with Trainer</div>
+    <div class="nav-item" onclick="showPanel('notes')"><span>📝</span> Trainer Notes</div>
+    <div class="nav-item" onclick="showPanel('membership')"><span>💳</span> Membership</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="client-info">
+      <div class="client-avatar" id="avatarLetter">R</div>
+      <div>
+        <div class="client-name" id="clientFullName">Rohan Verma</div>
+        <div class="client-plan" id="clientPlanLabel">Elite Plan</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='index.html'">← Back to Site</button>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="page-title" id="pageTitle">My Dashboard</div>
+    </div>
+    <div style="font-size:.8rem;color:var(--gray)" id="topDate"></div>
+  </div>
+
+  <!-- HOME PANEL -->
+  <div class="panel active" id="panel-home">
+    <div class="status-hero">
+      <div>
+        <div style="font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--gray);margin-bottom:.4rem">Application Status</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:.5rem" id="statusTitle">Congratulations! 🎉</div>
+        <p style="color:rgba(245,245,245,0.65);font-size:.9rem;max-width:400px" id="statusMessage">Your application has been accepted. Your coach will reach out to you within 24 hours to begin your journey.</p>
+      </div>
+      <span class="status-pill accepted" id="statusPill">✅ Accepted</span>
+    </div>
+    <div class="cards-grid">
+      <div class="info-card">
+        <div class="info-card-icon">💳</div>
+        <div class="info-card-num" id="daysLeft">173</div>
+        <div class="info-card-label">Days Remaining</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">🏋️</div>
+        <div class="info-card-num" id="checkinCount">0</div>
+        <div class="info-card-label">Gym Check-ins</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">🎯</div>
+        <div class="info-card-num">Recomp</div>
+        <div class="info-card-label">Your Goal</div>
+      </div>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:1.5rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:1rem">Membership Progress</div>
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--gray);margin-bottom:.5rem">
+        <span>Day <span id="dayProgress">7</span> of 180</span>
+        <span id="pctProgress">3.9%</span>
+      </div>
+      <div class="membership-bar-track">
+        <div class="membership-bar-fill" id="progressBar" style="width:3.9%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--gray);margin-top:.5rem">
+        <span>Started: Jan 10, 2025</span>
+        <span>Ends: Jul 9, 2025</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR PANEL -->
+  <div class="panel" id="panel-calendar">
+    <div class="calendar-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-month" id="calMonth"></div>
+        <button class="cal-nav" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div style="display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--gray)"><div style="width:10px;height:10px;border-radius:2px;background:var(--gold)"></div> Today</div>
+        <div style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--gray)"><div style="width:10px;height:10px;border-radius:2px;background:rgba(76,175,80,0.3);border:1px solid #4CAF50"></div> Checked In</div>
+      </div>
+      <div style="text-align:center;margin-top:1.5rem">
+        <button class="btn-checkin" id="checkinBtn" onclick="checkInToday()">📍 Check In Today</button>
+        <div style="font-size:.75rem;color:var(--gray);margin-top:.5rem" id="checkinStatus"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div class="panel" id="panel-chat">
+    <div class="chat-window">
+      <div class="chat-header">
+        <div style="width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#0D0D0D;font-weight:700">S</div>
+        <div>
+          <div style="font-weight:600">Srikanth J. Naidu</div>
+          <div style="font-size:.72rem;color:var(--green)">● Elite Coach · Online</div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Message your coach..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <button class="chat-send" onclick="sendMsg()">Send ↑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES PANEL -->
+  <div class="panel" id="panel-notes">
+    <div style="margin-bottom:1.5rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--gold);margin-bottom:.3rem">Trainer Notes</div>
+      <div style="color:var(--gray);font-size:.85rem">Notes and observations from your coach</div>
+    </div>
+    <div class="notes-list" id="notesList"></div>
+  </div>
+
+  <!-- MEMBERSHIP PANEL -->
+  <div class="panel" id="panel-membership">
+    <div style="background:linear-gradient(135deg,#1a1206,#0f0f0f);border:1px solid var(--gold);border-radius:8px;padding:2rem;margin-bottom:2rem">
+      <div style="font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--gray);margin-bottom:.4rem">Current Plan</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;letter-spacing:3px;color:var(--gold)">Elite</div>
+      <div style="color:rgba(245,245,245,0.65);font-size:.9rem;margin-top:.3rem">6 Month Premium Coaching Program</div>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:1.5rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:1.2rem">Plan Details</div>
+      <div style="display:flex;flex-direction:column;gap:.8rem">
+        <div style="display:flex;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Plan</span><span style="color:var(--white);font-weight:600">Elite ₹12,999/mo</span></div>
+        <div style="display:flex;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Start Date</span><span>January 10, 2025</span></div>
+        <div style="display:flex;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">End Date</span><span>July 9, 2025</span></div>
+        <div style="display:flex;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">Days Remaining</span><span style="color:var(--gold);font-weight:700">173 days</span></div>
+        <div style="display:flex;justify-content:space-between;padding:.8rem 0"><span style="color:var(--gray)">Status</span><span class="status-pill accepted">✅ Active</span></div>
+      </div>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:1.5rem;margin-top:1.2rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--gold);margin-bottom:1.2rem">Plan Perks</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:.7rem">
+        <li style="display:flex;gap:.8rem;align-items:center;font-size:.88rem;color:rgba(245,245,245,0.8)"><span style="color:var(--gold)">✦</span>Fully custom elite program</li>
+        <li style="display:flex;gap:.8rem;align-items:center;font-size:.88rem;color:rgba(245,245,245,0.8)"><span style="color:var(--gold)">✦</span>Daily meal planning</li>
+        <li style="display:flex;gap:.8rem;align-items:center;font-size:.88rem;color:rgba(245,245,245,0.8)"><span style="color:var(--gold)">✦</span>Weekly 1-on-1 video calls</li>
+        <li style="display:flex;gap:.8rem;align-items:center;font-size:.88rem;color:rgba(245,245,245,0.8)"><span style="color:var(--gold)">✦</span>24/7 dedicated support</li>
+        <li style="display:flex;gap:.8rem;align-items:center;font-size:.88rem;color:rgba(245,245,245,0.8)"><span style="color:var(--gold)">✦</span>Monthly bloodwork review</li>
+        <li style="display:flex;gap:.8rem;align-items:center;font-size:.88rem;color:rgba(245,245,245,0.8)"><span style="color:var(--gold)">✦</span>Contest prep available</li>
+        <li style="display:flex;gap:.8rem;align-items:center;font-size:.88rem;color:rgba(245,245,245,0.8)"><span style="color:var(--gold)">✦</span>Lifetime community access</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toastIcon">✅</span>
+  <span id="toastText">Done!</span>
+</div>
+
+<script>
+document.getElementById('topDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.getElementById('checkinCount').textContent=checkins.length;
+
+// NAVIGATION
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  const titles={home:'My Dashboard',calendar:'Gym Attendance',chat:'Chat with Trainer',notes:'Trainer Notes',membership:'Membership'};
+  document.getElementById('pageTitle').textContent=titles[name]||name;
+  const items=document.querySelectorAll('.nav-item');
+  const idx={home:0,calendar:1,chat:2,notes:3,membership:4};
+  if(idx[name]!==undefined)items[idx[name]].classList.add('active');
+  if(name==='calendar')renderCalendar();
+  if(name==='chat')renderMessages();
+  if(name==='notes')renderNotes();
+}
+
+// CALENDAR
+function renderCalendar(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('calMonth').textContent=months[calDate.getMonth()]+' '+calDate.getFullYear();
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML=days.map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+  const firstDay=new Date(calDate.getFullYear(),calDate.getMonth(),1).getDay();
+  const daysInMonth=new Date(calDate.getFullYear(),calDate.getMonth()+1,0).getDate();
+  const today=new Date();
+  const todayStr=today.toISOString().split('T')[0];
+  const checkedToday=checkins.includes(todayStr);
+  document.getElementById('checkinBtn').disabled=checkedToday;
+  document.getElementById('checkinStatus').textContent=checkedToday?'✅ Already checked in today!':'';
+  for(let i=0;i<firstDay;i++)grid.innerHTML+=`<div class="cal-day other-month"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${calDate.getFullYear()}-${String(calDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=d===today.getDate()&&calDate.getMonth()===today.getMonth()&&calDate.getFullYear()===today.getFullYear();
+    const isCheckin=checkins.includes(dateStr);
+    grid.innerHTML+=`<div class="cal-day ${isToday?'today':''} ${isCheckin&&!isToday?'checked-in':''}">${d}</div>`;
+  }
+}
+function changeMonth(dir){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1);renderCalendar()}
+function checkInToday(){
+  const today=new Date().toISOString().split('T')[0];
+  if(!checkins.includes(today)){
+    checkins.push(today);
+    localStorage.setItem('fitpro_checkins_'+CLIENT_ID,JSON.stringify(checkins));
+    document.getElementById('checkinCount').textContent=checkins.length;
+    renderCalendar();
+    showToast('📍 Check-in recorded! Great work! 💪');
+  }
+}
+
+// CHAT
+function renderMessages(){
+  const msgs=chatData[CLIENT_ID]||[];
+  const container=document.getElementById('chatMessages');
+  if(msgs.length===0){
+    container.innerHTML='<div style="text-align:center;color:var(--gray);padding:2rem;font-size:.85rem">No messages yet. Say hello to your coach! 👋</div>';
+    return;
+  }
+  container.innerHTML=msgs.map(m=>`
+    <div>
+      <div class="msg ${m.sender==='trainer'?'trainer':'client-msg'}">${m.text}</div>
+      <div class="msg-time" style="${m.sender==='trainer'?'text-align:left':'text-align:right'}">${m.sender==='trainer'?'Coach Srikanth':'You'} · ${m.time}</div>
+    </div>`).join('');
+  container.scrollTop=container.scrollHeight;
+}
+function sendMsg(){
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim();
+  if(!text)return;
+  if(!chatData[CLIENT_ID])chatData[CLIENT_ID]=[];
+  chatData[CLIENT_ID].push({sender:'client',text,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  input.value='';
+  localStorage.setItem('fitpro_chat',JSON.stringify(chatData));
+  renderMessages();
+  // Simulate trainer reply
+  setTimeout(()=>{
+    const replies=["Great progress! Keep it up! 💪","I'll review your update and get back to you.","Stay consistent, the results will follow!","Remember to prioritize sleep and recovery.","Excellent commitment! You're on track."];
+    chatData[CLIENT_ID].push({sender:'trainer',text:replies[Math.floor(Math.random()*replies.length)],time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+    localStorage.setItem('fitpro_chat',JSON.stringify(chatData));
+    renderMessages();
+  },2000);
+}
+
+// NOTES
+function renderNotes(){
+  const clientNotes=notes[CLIENT_ID];
+  const list=document.getElementById('notesList');
+  if(!clientNotes){
+    list.innerHTML='<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:2rem;text-align:center;color:var(--gray)">No trainer notes yet. Check back after your first week!</div>';
+    return;
+  }
+  list.innerHTML=`<div class="note-card"><div class="note-date">Latest Note from Coach Srikanth</div><div class="note-text">${clientNotes}</div></div>`;
+}
+
+// TOAST
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastText').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),4000);
+}
+</script>
+</body>
+</html>
